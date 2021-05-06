@@ -15,7 +15,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
         val stackTraceItem = Thread.currentThread().stackTrace[4]
 
         val function: String = stackTraceItem.methodName
-        val file: String = stackTraceItem.fileName
+        val file: String = stackTraceItem.fileName ?: "Unknown"
         val line: Int = stackTraceItem.lineNumber
 
         val message = closure() ?: return

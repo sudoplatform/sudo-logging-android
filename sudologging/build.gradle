@@ -1,18 +1,20 @@
+plugins {
+    id "org.jetbrains.dokka" version "${dokka_version}"
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'org.jetbrains.dokka'
-apply plugin: "org.sonarqube"
+apply plugin: 'org.sonarqube'
+apply plugin: "org.owasp.dependencycheck"
 
 android {
-    compileSdkVersion 28
-
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.25"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -28,25 +30,88 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'androidx.core:core-ktx:1.5.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from android.sourceSets.main.java.srcDirs
+// Returns a list of `configurations` which should not be scanned for vulnerabilities
+def getConfigurationsToSkip = { configs ->
+    configs.findAll {
+        it.name.startsWithAny("androidTest", "test", "lint") ||
+                it.name.contains("AndroidTest") ||
+                it.name.contains("UnitTest")
+    }.collect {
+        it.name
+    }
 }
 
-artifacts {
-    archives sourcesJar
+tasks.register("printConfigurationsToSkip") {
+    group = "OWASP dependency-check"
+    description = "Print the configurations which are skipped when scanning for vulnerable dependencies"
+    doLast {
+        println "Configurations to skip when scanning for vulnerable dependencies:"
+        println getConfigurationsToSkip(configurations).join("\n")
+    }
 }
 
-dokka {
-    outputFormat = 'html'
-    outputDirectory = "$buildDir/javadoc"
+afterEvaluate {
+    // NOTE: this must be within `afterEvaluate` to ensure all the configurations have been created before filtering them
+    dependencyCheck {
+        suppressionFile file("../dependency-suppression.xml").toString()
+        failBuildOnCVSS 0
+        skipConfigurations = getConfigurationsToSkip(configurations)
+    }
+}
+
+// https://github.com/cookpad/license-tools-plugin
+apply plugin: "com.cookpad.android.licensetools"
+licenseTools {
+    licensesYaml = file("licenses.yml")
+    ignoredGroups = ["com.nhaarman:mockito-kotlin", "com.anonyome", "com.sudoplatform"]
+    ignoredProjects = ["org.mockito"]
+}
+
+@Grab('org.yaml:snakeyaml:1.17') // Yaml parser
+import org.yaml.snakeyaml.Yaml
+
+task checkLicenseHaveRequiredFields {
+    description = "Check every license entry has the mandatory fields"
+    group = "verification"
+    doLast {
+        def mandatoryFields = ["artifact", "name", "copyrightHolder", "url"]
+        Yaml parser = new Yaml()
+        def licenses = parser.load((file("licenses.yml") as File).text)
+        def errors = new StringBuilder()
+        licenses.each { artifact ->
+            mandatoryFields.each { field ->
+                if (artifact[field] == null) {
+                    errors.append("License entry '${artifact.artifact}' is missing required element `$field`\n")
+                }
+            }
+            if (artifact["license"] == null && artifact["licenseUrl" == null]) {
+                errors.append("License entry '${artifact.artifact}' must have one of [license,licenseUrl]\n")
+            }
+        }
+        if (errors.length() > 0) {
+            throw new GradleException("Missing license elements:\n$errors")
+        }
+    }
+}
+checkLicenses.finalizedBy checkLicenseHaveRequiredFields
+
+dokkaHtml {
+    outputDirectory.set(project.file("$buildDir/javadoc"))
+
+    dokkaSourceSets {
+        configureEach {
+            jdkVersion.set(8)
+            skipEmptyPackages.set(true)
+        }
+    }
 }
 
 apply plugin: 'maven-publish'
@@ -57,16 +122,21 @@ if (file("../secret.properties").isFile()) {
 }
 
 ext {
-    PUBLISH_GROUP_ID = 'com.sudoplatform'
-    PUBLISH_ARTIFACT_ID = 'sudologging'
-    PUBLISH_DESCRIPTION = 'An android logging library used by SudoPlatform SDKs'
-    PUBLISH_PROJECT_URL = 'https://github.com/sudoplatform/sudo-logging-android'
-    PUBLISH_PROJECT_SCM = 'scm:git:github.com/sudoplatform/sudo-logging-android.git'
+    projectArtifact = 'sudologging'
+    projectDescription = 'An android logging library used by SudoPlatform SDKs'
+    projectUrl = 'https://github.com/sudoplatform/sudo-logging-android'
+    projectSCM = 'scm:git:github.com/sudoplatform/sudo-logging-android.git'
     if (project.hasProperty('tag')) {
-        PUBLISH_VERSION = "$tag"
+        projectVersion = "$tag"
     } else {
-        PUBLISH_VERSION = "0.0.0"
+        projectVersion = project.android.defaultConfig.versionName
     }
 }
 
-apply from: "${rootProject.projectDir}/publish-mavencentral.gradle"
+if(project.findProperty("tag") &&
+        project.file("${rootProject.projectDir}/util/publish-mavencentral.gradle").exists()) {
+    apply from: "${rootProject.projectDir}/util/publish-mavencentral.gradle"
+}
+else if (project.file("${rootProject.projectDir}/util/publish-internal-android.gradle").exists()) {
+    apply from: "${rootProject.projectDir}/util/publish-internal-android.gradle"
+}

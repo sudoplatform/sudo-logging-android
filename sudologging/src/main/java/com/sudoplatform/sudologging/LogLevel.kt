@@ -1,12 +1,17 @@
+/*
+ * Copyright © 2022 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.sudoplatform.sudologging
 
-import android.widget.Switch
 import android.util.Log
 
 /**
  * Enumeration of supported logging levels
  */
-public enum class LogLevel {
+enum class LogLevel {
     VERBOSE, DEBUG, INFO, WARNING, ERROR, NONE;
 
     val description: String

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2022 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.sudoplatform.sudologging
 
 import android.util.Log
@@ -19,6 +25,6 @@ class AndroidUtilsLogDriver(override var logLevel: LogLevel) : LogDriverInterfac
         val f = details.file
         val function = details.function
         val message = details.message
-        return "${date} [${level}] [${id}] [${f}] ${function} > ${message}"
+        return "$date [${level}] [${id}] [${f}] $function > $message"
     }
 }

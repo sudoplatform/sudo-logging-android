@@ -1,11 +1,26 @@
+/*
+ * Copyright © 2022 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.sudoplatform.sudologging
 
-import android.util.Log
-import java.util.*
+import java.util.Date
 
 class Logger(private val identifier: String, private val driver: LogDriverInterface) {
 
-    internal fun log(logLevel: LogLevel, closure: () -> String?) {
+    /**
+     * Checksum's for each file are generated and are used to create a checksum that is used when
+     * publishing to maven central. In order to retry a failed publish without needing to change any
+     * functionality, we need a way to generate a different checksum for the source code. We can
+     * change the value of this property which will generate a different checksum for publishing
+     * and allow us to retry. The value of `version` doesn't need to be kept up-to-date with the
+     * version of the code.
+     */
+    private val version: String = "1.3.1"
+
+    private fun log(logLevel: LogLevel, closure: () -> String?) {
         if (logLevel < driver.logLevel) { return }
 
         // go to the fourth item in the stack trace to get the line that issued the log request

@@ -34,7 +34,7 @@ interface LogDriverInterface {
         val line = details.line
         val function = details.function
         val message = details.message
-        return "${date} [${level}] [${id}] [${f}] ${line} ${function} > ${message}"
+        return "$date [${level}] [${id}] [${f}] $line $function > $message"
     }
 
     /**

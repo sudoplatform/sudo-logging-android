@@ -17,7 +17,8 @@ buildscript {
         // in the individual module build.gradle files
 
         classpath "org.owasp:dependency-check-gradle:8.2.1"
-        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3"
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:4.0.0.2929"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
         classpath "com.cookpad.android.licensetools:license-tools-plugin:1.7.0"
     }
 }

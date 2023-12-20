@@ -18,7 +18,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * and allow us to retry. The value of `version` doesn't need to be kept up-to-date with the
      * version of the code.
      */
-    private val version: String = "3.0.0"
+    private val version: String = "4.0.0"
 
     private fun log(logLevel: LogLevel, closure: () -> String?) {
         if (logLevel < driver.logLevel) { return }
@@ -53,7 +53,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * @param message The message to log
      */
     fun verbose(message: String?) {
-        log(LogLevel.VERBOSE, { message })
+        log(LogLevel.VERBOSE) { message }
     }
 
     /**
@@ -69,7 +69,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * @param message The message to log
      */
     fun debug(message: String?) {
-        log(LogLevel.DEBUG, { message })
+        log(LogLevel.DEBUG) { message }
     }
 
     /**
@@ -85,7 +85,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * @param message The message to log
      */
     fun info(message: String?) {
-        log(LogLevel.INFO, { message })
+        log(LogLevel.INFO) { message }
     }
 
     /**
@@ -101,7 +101,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * @param message The message to log
      */
     fun warning(message: String?) {
-        log(LogLevel.WARNING, { message })
+        log(LogLevel.WARNING) { message }
     }
 
     /**
@@ -117,7 +117,7 @@ class Logger(private val identifier: String, private val driver: LogDriverInterf
      * @param message The message to log
      */
     fun error(message: String?) {
-        log(LogLevel.ERROR, { message })
+        log(LogLevel.ERROR) { message }
     }
 
     /**

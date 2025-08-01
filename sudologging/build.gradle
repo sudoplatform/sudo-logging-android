@@ -4,14 +4,14 @@ apply plugin: 'org.sonarqube'
 apply plugin: "org.owasp.dependencycheck"
 
 android {
-    compileSdk 34
+    compileSdk 35
     namespace "com.sudoplatform.sudologging"
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 1
-        versionName "5.0.2"
+        versionName "6.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -71,12 +71,9 @@ afterEvaluate {
         suppressionFile file("../dependency-suppression.xml").toString()
         failBuildOnCVSS 0
         skipConfigurations = getConfigurationsToSkip(configurations)
-
-        cve {
-            urlModified = "https://anonyome-nist-cve-mirror.s3.amazonaws.com/nvdcve-1.1-modified.json.gz"
-            urlBase = "https://anonyome-nist-cve-mirror.s3.amazonaws.com/nvdcve-1.1-%d.json.gz"
-            startYear = 2002
-            waitTime = 0
+        nvd {
+            // https://github.com/jeremylong/open-vulnerability-cli/tree/main/vulnz#caching-the-nvd-cve-data
+            datafeedUrl = "https://anonyome-nist-cve-mirror.s3.amazonaws.com/"
         }
     }
 }
